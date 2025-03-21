@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { parseUnits } from 'viem';
-import { getContract } from '../lib/thirdweb';
+import { contracts } from '../lib/contracts';
 import { useWalletStore } from '../lib/store';
 import { GIGFI_TOKEN_ADDRESS } from '../lib/constants';
+import { GigCoinABI } from '../contracts/GigCoin';
 
 export const useGigCoinPurchase = () => {
   const [isApproving, setIsApproving] = useState(false);
@@ -27,24 +28,17 @@ export const useGigCoinPurchase = () => {
     setError(null);
     
     try {
-      // Get contract instance
-      const contract = await getContract(GIGFI_TOKEN_ADDRESS);
-      if (!contract) {
-        throw new Error('Failed to get contract instance');
-      }
-
       // Convert amount to ETH value
       const value = parseUnits(amount, 18);
 
-      // Execute the purchase using buyTokens function
+      // Execute the purchase using sendTransaction
       setPurchasing(true);
-      const tx = await contract.call('buyTokens', [], {
-        value: value.toString(),
-        from: address
+      const { receipt } = await contracts.sendTransaction({
+        address: GIGFI_TOKEN_ADDRESS,
+        abi: GigCoinABI,
+        functionName: 'buyTokens',
+        value
       });
-
-      // Wait for transaction confirmation
-      await tx.receipt;
       
       // Update balances
       await updateBalance();

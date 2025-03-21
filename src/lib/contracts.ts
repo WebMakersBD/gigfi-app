@@ -134,6 +134,35 @@ const contracts = {
     }
   },
 
+  // Write functions with signer
+  async sendTransaction(params: {
+    address: string;
+    abi: any;
+    functionName: string;
+    args?: any[];
+    value?: bigint;
+  }) {
+    try {
+      const { client, account } = await getWalletClient();
+      
+      const hash = await client.writeContract({
+        ...params,
+        account
+      });
+
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash,
+        timeout: 60_000,
+        confirmations: 1
+      });
+
+      return { hash, receipt };
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      throw error;
+    }
+  },
+
   // Read functions with improved error handling and caching
   async getTokenBalance(token: 'USDC' | 'GIGFI' | 'SHARES', address: string) {
     try {
@@ -186,4 +215,4 @@ const contracts = {
 };
 
 // Export only once
-export { publicClient, contracts };
+export { publicClient, contracts, getWalletClient };
